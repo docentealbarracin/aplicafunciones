@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Determinación de Función Cuadrática con Gráfico</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        canvas {
+            max-width: 100%;
+            height: 400px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Determinación de Función Cuadrática con Gráfico</h1>
+
+    <form id="quadraticForm">
+        <h3>Ingresa las coordenadas:</h3>
+        <div id="coordinates">
+            <label for="x1">Coordenada 1 (\(x_1, y_1\)):</label>
+            <input type="number" id="x1" placeholder="x1" required>
+            <input type="number" id="y1" placeholder="y1" required>
+
+            <label for="x2">Coordenada 2 (\(x_2, y_2\)):</label>
+            <input type="number" id="x2" placeholder="x2" required>
+            <input type="number" id="y2" placeholder="y2" required>
+
+            <label for="x3">Coordenada 3 (\(x_3, y_3\)):</label>
+            <input type="number" id="x3" placeholder="x3" required>
+            <input type="number" id="y3" placeholder="y3" required>
+
+            <label for="x4">Coordenada 4 (\(x_4, y_4\)):</label>
+            <input type="number" id="x4" placeholder="x4" required>
+            <input type="number" id="y4" placeholder="y4" required>
+
+            <label for="x5">Coordenada 5 (\(x_5, y_5\)):</label>
+            <input type="number" id="x5" placeholder="x5" required>
+            <input type="number" id="y5" placeholder="y5" required>
+        </div>
+
+        <button type="submit">Calcular Función Cuadrática</button>
+    </form>
+
+    <div class="result" id="result" style="display: none;">
+        <h3>Función Cuadrática:</h3>
+        <p id="quadraticFunction"></p>
+    </div>
+
+    <canvas id="chartCanvas"></canvas>
+</div>
+
+<script>
+    document.getElementById('quadraticForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        // Obtener coordenadas
+        const coordinates = [];
+        for (let i = 1; i <= 5; i++) {
+            const x = parseFloat(document.getElementById(`x${i}`).value);
+            const y = parseFloat(document.getElementById(`y${i}`).value);
+            coordinates.push({ x, y });
+        }
+
+        // Sumas necesarias para cálculo
+        let sumX = 0, sumX2 = 0, sumX3 = 0, sumX4 = 0;
+        let sumY = 0, sumXY = 0, sumX2Y = 0;
+
+        coordinates.forEach(point => {
+            sumX += point.x;
+            sumX2 += Math.pow(point.x, 2);
+            sumX3 += Math.pow(point.x, 3);
+            sumX4 += Math.pow(point.x, 4);
+            sumY += point.y;
+            sumXY += point.x * point.y;
+            sumX2Y += Math.pow(point.x, 2) * point.y;
+        });
+
+        const n = coordinates.length;
+
+        // Resolver sistema lineal para encontrar a, b, c
+        const A = [
+            [n, sumX, sumX2],
+            [sumX, sumX2, sumX3],
+            [sumX2, sumX3, sumX4]
+        ];
+        const B = [sumY, sumXY, sumX2Y];
+
+        // Resolver sistema Ax = B usando método de eliminación de Gauss
+        function solveLinearSystem(A, B) {
+            for (let i = 0; i < A.length; i++) {
+                let maxRow = i;
+                for (let k = i + 1; k < A.length; k++) {
+                    if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k;
+                }
+                [A[i], A[maxRow]] = [A[maxRow], A[i]];
+                [B[i], B[maxRow]] = [B[maxRow], B[i]];
+
+                for (let k = i + 1; k < A.length; k++) {
+                    const factor = A[k][i] / A[i][i];
+                    for (let j = i; j < A.length; j++) A[k][j] -= factor * A[i][j];
+                    B[k] -= factor * B[i];
+                }
+            }
+
+            const x = new Array(A.length).fill(0);
+            for (let i = A.length - 1; i >= 0; i--) {
+                let sum = 0;
+                for (let j = i + 1; j < A.length; j++) sum += A[i][j] * x[j];
+                x[i] = (B[i] - sum) / A[i][i];
+            }
+            return x;
+        }
+
+        const [c, b, a] = solveLinearSystem(A, B);
+
+        // Mostrar la función cuadrática
+        const quadraticFunction = `y = ${a.toFixed(2)}x² + ${b.toFixed(2)}x + ${c.toFixed(2)}`;
+        document.getElementById('quadraticFunction').textContent = quadraticFunction;
+        document.getElementById('result').style.display = 'block';
+
+        // Datos para la gráfica
+        const xValues = coordinates.map(point => point.x);
+        const yValues = coordinates.map(point => point.y);
+        const curveYValues = xValues.map(x => a * Math.pow(x, 2) + b * x + c);
+
+        // Crear gráfico con Chart.js
+        const ctx = document.getElementById('chartCanvas').getContext('2d');
+        new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: 'Puntos Originales',
+                        data: coordinates.map(point => ({ x: point.x, y: point.y })),
+                        backgroundColor: 'rgba(255, 99, 132, 1)',
+                        pointRadius: 5,
+                    },
+                    {
+                        label: 'Curva Cuadrática Ajustada',
+                        data: xValues.map((x, index) => ({ x: x, y: curveYValues[index] })),
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        fill: false,
+                        borderWidth: 2,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { title: { display: true, text: 'X' } },
+                    y: { title: { display: true, text: 'Y' } }
+                }
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
